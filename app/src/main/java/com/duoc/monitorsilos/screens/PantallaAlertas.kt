@@ -14,18 +14,28 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.duoc.monitorsilos.data.DatosSimulados
 import com.duoc.monitorsilos.model.Alerta
 import com.duoc.monitorsilos.model.EstadoSilo
+import com.duoc.monitorsilos.utils.NotificationHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaAlertas() {
     val alertas = DatosSimulados.obtenerAlertas()
-
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        NotificationHelper.enviarNotificacionAlerta(
+            context,
+            "🚨 Silos Críticos",
+            "Atención: Hay silos en nivel crítico que requieren reposición."
+        )
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {

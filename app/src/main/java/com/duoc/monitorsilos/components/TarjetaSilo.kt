@@ -1,13 +1,10 @@
 package com.duoc.monitorsilos.components
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -22,34 +19,37 @@ fun TarjetaSilo(silo: Silo) {
         EstadoSilo.CRITICO -> Color(0xFFF44336)
     }
 
+    var startAnimation by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { startAnimation = true }
+
+    val porcentajeTarget = (silo.porcentajeDisponible / 100f).toFloat()
+    val progressAnimated by animateFloatAsState(
+        targetValue = if (startAnimation) porcentajeTarget else 0f,
+        animationSpec = tween(durationMillis = 1200),
+        label = "ProgresoSilo"
+    )
+
     Card(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(top = 12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = colorEstado.copy(alpha = 0.15f)
-        )
+        colors = CardDefaults.cardColors(containerColor = colorEstado.copy(alpha = 0.15f))
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = silo.identificacion,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "Nivel: ${silo.nivelActualKg.toInt()} kg / ${silo.capacidadTotalKg.toInt()} kg"
-            )
-            Text(
-                text = "Disponible: ${"%.1f".format(silo.porcentajeDisponible)}%"
-            )
-            Text(
-                text = "Estado: ${silo.estado.name}",
+            Text(text = silo.identificacion, style = MaterialTheme.typography.titleMedium)
+            Text(text = "Nivel: ${silo.nivelActualKg.toInt()} kg / ${silo.capacidadTotalKg.toInt()} kg")
+
+            Spacer(modifier = Modifier.height(6.dp))
+            LinearProgressIndicator(
+                progress = { progressAnimated },
+                modifier = Modifier.fillMaxWidth().height(8.dp),
                 color = colorEstado,
-                style = MaterialTheme.typography.bodySmall
+                trackColor = Color.LightGray
             )
-            Text(
-                text = "Actualizado: ${silo.fechaActualizacion}",
-                style = MaterialTheme.typography.bodySmall
-            )
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(text = "Disponible: ${"%.1f".format(silo.porcentajeDisponible)}%")
+            Text(text = "Estado: ${silo.estado.name}", color = colorEstado)
         }
     }
 }
