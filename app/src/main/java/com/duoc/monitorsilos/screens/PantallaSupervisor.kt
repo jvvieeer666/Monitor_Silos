@@ -1,14 +1,20 @@
 package com.duoc.monitorsilos.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.duoc.monitorsilos.components.EstadoConexionBadge
 import com.duoc.monitorsilos.data.DatosSimulados
 import com.duoc.monitorsilos.model.Alerta
 import com.duoc.monitorsilos.model.EstadoSilo
@@ -16,13 +22,27 @@ import com.duoc.monitorsilos.utils.NotificationHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaSupervisor() {
+fun PantallaSupervisor(
+    onVerGranjas: () -> Unit = {},
+    onCerrarSesion: () -> Unit = {}
+) {
     val context = LocalContext.current
-    var listaAlertas by remember { mutableStateOf(DatosSimulados.obtenerAlertas()) }
+    var listaAlertas by remember { mutableStateOf(DatosSimulados.obtenerAlertas(context)) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text("👮 Supervisor - Panel de Alertas") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("👮 Supervisor - Alertas") },
+                actions = {
+                    EstadoConexionBadge()
+                    Spacer(modifier = Modifier.width(4.dp))
+                    IconButton(onClick = onCerrarSesion) {
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Cerrar Sesión")
+                    }
+                }
+            )
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -30,6 +50,20 @@ fun PantallaSupervisor() {
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onVerGranjas,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("🏠 Ver Granjas")
+                }
+            }
+
             Button(
                 onClick = {
                     NotificationHelper.enviarNotificacionAlerta(
@@ -38,12 +72,16 @@ fun PantallaSupervisor() {
                         "El SILO-A3 requiere reposición urgente de alimento."
                     )
                 },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
             ) {
                 Text("Probar Notificación Nativa 🔔")
             }
 
             Text("Alertas y Estado de Reposición:", style = MaterialTheme.typography.titleMedium)
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -53,9 +91,8 @@ fun PantallaSupervisor() {
                     TarjetaAlertaSupervisor(
                         alerta = alerta,
                         onAtender = { alertaAtendida ->
-                            listaAlertas = listaAlertas.map {
-                                if (it.id == alertaAtendida.id) it.copy(atendida = true) else it
-                            }
+                            DatosSimulados.marcarAlertaAtendida(context, alertaAtendida.id)
+                            listaAlertas = DatosSimulados.obtenerAlertas(context)
                         }
                     )
                 }
@@ -80,9 +117,20 @@ fun TarjetaAlertaSupervisor(alerta: Alerta, onAtender: (Alerta) -> Unit) {
             Text(text = alerta.mensaje, style = MaterialTheme.typography.titleSmall, color = color)
             Text(text = "Fecha: ${alerta.fecha}", style = MaterialTheme.typography.bodySmall)
             Spacer(modifier = Modifier.height(6.dp))
-            if (alerta.atendida) {
-                Text("✅ Reposición Coordinada", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF2E7D32))
-            } else {
+
+            AnimatedVisibility(
+                visible = alerta.atendida,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Text("✅ Reposición Coordinada y Guardada", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF2E7D32))
+            }
+
+            AnimatedVisibility(
+                visible = !alerta.atendida,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 Button(
                     onClick = { onAtender(alerta) },
                     colors = ButtonDefaults.buttonColors(containerColor = color)

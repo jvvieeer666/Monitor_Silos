@@ -1,5 +1,6 @@
 package com.duoc.monitorsilos.data
 
+import android.content.Context
 import com.duoc.monitorsilos.model.Alerta
 import com.duoc.monitorsilos.model.EstadoSilo
 import com.duoc.monitorsilos.model.Granja
@@ -68,8 +69,8 @@ object DatosSimulados {
         )
     )
 
-    // ==================== ALERTAS ====================
-    val alertas: List<Alerta> = listOf(
+    // ==================== ALERTAS INICIALES ====================
+    private val alertasIniciales: List<Alerta> = listOf(
         Alerta(
             id = 1, siloId = 3, mensaje = "SILO-A3 en nivel crítico (10%)",
             nivelCritico = EstadoSilo.CRITICO, fecha = "2026-09-25 20:30"
@@ -84,25 +85,57 @@ object DatosSimulados {
         )
     )
 
-    // ==================== MOVIMIENTOS ====================
-    val movimientos: List<Movimiento> = listOf(
+    // ==================== MOVIMIENTOS INICIALES ====================
+    private val movimientosIniciales: List<Movimiento> = listOf(
         Movimiento(1, 1, TipoMovimiento.CARGA, 5000.0, "2026-09-24 08:00", "Juan Pérez"),
         Movimiento(2, 1, TipoMovimiento.CONSUMO, 500.0, "2026-09-25 12:00", "Sistema"),
         Movimiento(3, 3, TipoMovimiento.CONSUMO, 800.0, "2026-09-25 18:00", "Sistema"),
         Movimiento(4, 5, TipoMovimiento.DESCARGA, 3000.0, "2026-09-23 10:00", "María González")
     )
 
-    // ==================== FUNCIONES DE CONSULTA ====================
+    private var _movimientosList: MutableList<Movimiento>? = null
+
+    fun obtenerMovimientos(context: Context? = null): List<Movimiento> {
+        if (_movimientosList == null) {
+            _movimientosList = movimientosIniciales.toMutableList()
+            if (context != null) {
+                val prefs = PreferencesManager(context)
+                val guardados = prefs.obtenerMovimientos()
+                if (guardados != null && guardados.isNotEmpty()) {
+                    _movimientosList = guardados.toMutableList()
+                }
+            }
+        }
+        return _movimientosList ?: movimientosIniciales
+    }
+
+    fun agregarMovimiento(context: Context, nuevoMovimiento: Movimiento) {
+        val listaActual = obtenerMovimientos(context).toMutableList()
+        listaActual.add(nuevoMovimiento)
+        _movimientosList = listaActual
+        PreferencesManager(context).guardarMovimientos(listaActual)
+    }
 
     fun obtenerGranjas(): List<Granja> = granjas
 
     fun obtenerSilosDeGranja(granjaId: Int): List<Silo> =
         silos.filter { it.granjaId == granjaId }
 
-    fun obtenerAlertas(): List<Alerta> = alertas
+    fun obtenerAlertas(context: Context? = null): List<Alerta> {
+        if (context == null) return alertasIniciales
+        val prefs = PreferencesManager(context)
+        val atendidas = prefs.obtenerAlertasAtendidas()
+        return alertasIniciales.map { alerta ->
+            if (atendidas.contains(alerta.id)) alerta.copy(atendida = true) else alerta
+        }
+    }
+
+    fun marcarAlertaAtendida(context: Context, alertaId: Int) {
+        PreferencesManager(context).guardarAlertaAtendida(alertaId)
+    }
 
     fun obtenerMovimientosDeSilo(siloId: Int): List<Movimiento> =
-        movimientos.filter { it.siloId == siloId }
+        _movimientosList?.filter { it.siloId == siloId } ?: movimientosIniciales.filter { it.siloId == siloId }
 
     fun obtenerSiloPorId(id: Int): Silo? = silos.find { it.id == id }
 

@@ -1,5 +1,8 @@
 package com.duoc.monitorsilos.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -7,12 +10,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.duoc.monitorsilos.ViewModel.LoginViewModel
+import com.duoc.monitorsilos.components.EstadoConexionBadge
 import com.duoc.monitorsilos.model.Rol
 import com.duoc.monitorsilos.model.Usuario
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,9 +24,20 @@ fun PantallaLogin(
     loginViewModel: LoginViewModel = viewModel(),
     onLoginExitoso: (usuario: Usuario) -> Unit
 ) {
+    val context = LocalContext.current
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text("🏢 Monitor de Silos - Acceso") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("🏢 Monitor de Silos - Acceso") },
+                actions = {
+                    Box(modifier = Modifier.padding(end = 12.dp)) {
+                        EstadoConexionBadge()
+                    }
+                }
+            )
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -90,26 +105,36 @@ fun PantallaLogin(
                 )
             }
 
-            // Mensaje de Error General de Autenticación
-            loginViewModel.errorLoginGeneral?.let { error ->
-                Spacer(modifier = Modifier.height(12.dp))
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = error,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(12.dp)
-                    )
+            // Mensaje de Error General con Animación
+            AnimatedVisibility(
+                visible = loginViewModel.errorLoginGeneral != null,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                loginViewModel.errorLoginGeneral?.let { error ->
+                    Column {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = error,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { loginViewModel.autenticar { usuario -> onLoginExitoso(usuario) } },
+                onClick = {
+                    loginViewModel.autenticar(context) { usuario -> onLoginExitoso(usuario) }
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
                 Text("Ingresar")
@@ -117,7 +142,7 @@ fun PantallaLogin(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Guía/Sugerencia para pruebas durante la evaluación
+            // Guía/Sugerencia para pruebas
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)

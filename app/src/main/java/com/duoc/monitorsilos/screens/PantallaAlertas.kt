@@ -1,14 +1,20 @@
 package com.duoc.monitorsilos.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -19,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.duoc.monitorsilos.components.EstadoConexionBadge
 import com.duoc.monitorsilos.data.DatosSimulados
 import com.duoc.monitorsilos.model.Alerta
 import com.duoc.monitorsilos.model.EstadoSilo
@@ -26,9 +33,12 @@ import com.duoc.monitorsilos.utils.NotificationHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaAlertas() {
-    val alertas = DatosSimulados.obtenerAlertas()
+fun PantallaAlertas(
+    onVolver: () -> Unit = {}
+) {
     val context = LocalContext.current
+    val alertas = DatosSimulados.obtenerAlertas(context)
+
     LaunchedEffect(Unit) {
         NotificationHelper.enviarNotificacionAlerta(
             context,
@@ -36,10 +46,22 @@ fun PantallaAlertas() {
             "Atención: Hay silos en nivel crítico que requieren reposición."
         )
     }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text("🚨 Alertas Activas") })
+            TopAppBar(
+                title = { Text("🚨 Alertas Activas") },
+                navigationIcon = {
+                    IconButton(onClick = onVolver) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                    }
+                },
+                actions = {
+                    EstadoConexionBadge()
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+            )
         }
     ) { innerPadding ->
         LazyColumn(
@@ -85,7 +107,7 @@ fun TarjetaAlerta(alerta: Alerta) {
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
-                text = if (alerta.atendida) "✅ Atendida" else "⏳ Pendiente",
+                text = if (alerta.atendida) "✅ Atendida y Guardada" else "⏳ Pendiente",
                 style = MaterialTheme.typography.bodySmall
             )
         }

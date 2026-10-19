@@ -1,5 +1,6 @@
 package com.duoc.monitorsilos.viewmodel
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -18,10 +19,9 @@ class OperarioViewModel : ViewModel() {
     var errorOperario by mutableStateOf<String?>(null)
     var mensajeExito by mutableStateOf<String?>(null)
 
-    fun validarYRegistrar(): Boolean {
+    fun validarYRegistrar(context: Context): Boolean {
         var esValido = true
         mensajeExito = null
-
 
         val idParsed = siloIdInput.toIntOrNull()
         if (idParsed == null || DatosSimulados.obtenerSiloPorId(idParsed) == null) {
@@ -30,7 +30,6 @@ class OperarioViewModel : ViewModel() {
         } else {
             errorSiloId = null
         }
-
 
         val cantidadParsed = cantidadInput.toDoubleOrNull()
         if (cantidadParsed == null || cantidadParsed <= 0) {
@@ -48,9 +47,9 @@ class OperarioViewModel : ViewModel() {
         }
 
         if (esValido) {
-
+            val movimientosActuales = DatosSimulados.obtenerMovimientos(context)
             val nuevoMov = Movimiento(
-                id = (DatosSimulados.movimientos.size + 1),
+                id = (movimientosActuales.size + 1),
                 siloId = idParsed!!,
                 tipo = tipoMovimientoSeleccionado,
                 cantidadKg = cantidadParsed!!,
@@ -58,10 +57,12 @@ class OperarioViewModel : ViewModel() {
                 operario = operarioNombreInput
             )
 
+            DatosSimulados.agregarMovimiento(context, nuevoMov)
+
             siloIdInput = ""
             cantidadInput = ""
             operarioNombreInput = ""
-            mensajeExito = "¡Movimiento registrado con éxito!"
+            mensajeExito = "¡Movimiento registrado y guardado con éxito!"
         }
 
         return esValido
