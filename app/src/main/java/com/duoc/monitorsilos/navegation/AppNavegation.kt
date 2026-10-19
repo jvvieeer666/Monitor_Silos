@@ -1,19 +1,19 @@
 package com.duoc.monitorsilos.navegation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.duoc.monitorsilos.model.Rol
 import com.duoc.monitorsilos.screens.*
 
 object Rutas {
     const val LOGIN = "login"
-    const val OPERARIO = "operario"
-    const val SUPERVISOR = "supervisor"
-    const val JEFATURA = "jefatura"
-    const val GRANJAS = "granjas"
-    const val ALERTAS = "alertas"
+    const val OPERARIO = "operario/{usuario}"
+    const val SUPERVISOR = "supervisor/{usuario}"
+    const val JEFATURA = "jefatura/{usuario}"
 }
 
 @Composable
@@ -24,40 +24,45 @@ fun AppNavigation() {
         navController = navController,
         startDestination = Rutas.LOGIN
     ) {
-        // Pantalla de selección de rol
+        // Pantalla de Login
         composable(Rutas.LOGIN) {
             PantallaLogin(
-                onRolSeleccionado = { rol ->
+                onLoginExitoso = { usuario, rol ->
                     val ruta = when (rol) {
-                        Rol.OPERARIO -> Rutas.OPERARIO
-                        Rol.SUPERVISOR -> Rutas.SUPERVISOR
-                        Rol.JEFATURA -> Rutas.JEFATURA
+                        Rol.OPERARIO -> "operario/$usuario"
+                        Rol.SUPERVISOR -> "supervisor/$usuario"
+                        Rol.JEFATURA -> "jefatura/$usuario"
                     }
                     navController.navigate(ruta)
                 }
             )
         }
 
-        // Pantallas por rol
-        composable(Rutas.OPERARIO) {
-            PantallaOperario()
+        // Pantalla Operario
+        composable(
+            route = Rutas.OPERARIO,
+            arguments = listOf(navArgument("usuario") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val usuario = backStackEntry.arguments?.getString("usuario") ?: "Usuario"
+            PantallaOperario() // Puedes pasar 'usuario' a tu ViewModel o pantalla
         }
 
-        composable(Rutas.SUPERVISOR) {
+        // Pantalla Supervisor
+        composable(
+            route = Rutas.SUPERVISOR,
+            arguments = listOf(navArgument("usuario") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val usuario = backStackEntry.arguments?.getString("usuario") ?: "Supervisor"
             PantallaSupervisor()
         }
 
-        composable(Rutas.JEFATURA) {
+        // Pantalla Jefatura
+        composable(
+            route = Rutas.JEFATURA,
+            arguments = listOf(navArgument("usuario") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val usuario = backStackEntry.arguments?.getString("usuario") ?: "Jefatura"
             PantallaJefatura()
-        }
-
-        // Pantallas generales (podrían reutilizarse)
-        composable(Rutas.GRANJAS) {
-            PantallaGranjas()
-        }
-
-        composable(Rutas.ALERTAS) {
-            PantallaAlertas()
         }
     }
 }
