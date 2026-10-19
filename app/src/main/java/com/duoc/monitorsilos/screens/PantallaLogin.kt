@@ -1,23 +1,28 @@
 package com.duoc.monitorsilos.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.duoc.monitorsilos.ViewModel.LoginViewModel
 import com.duoc.monitorsilos.model.Rol
+import com.duoc.monitorsilos.model.Usuario
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaLogin(onLoginExitoso: (nombreUsuario: String, rol: Rol) -> Unit) {
-    var nombreInput by remember { mutableStateOf("") }
-    var rolSeleccionado by remember { mutableStateOf(Rol.OPERARIO) }
-    var errorNombre by remember { mutableStateOf<String?>(null) }
-
+fun PantallaLogin(
+    loginViewModel: LoginViewModel = viewModel(),
+    onLoginExitoso: (usuario: Usuario) -> Unit
+) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text("🏢 Monitor de Silos - Inicio de Sesión") }) }
+        topBar = { TopAppBar(title = { Text("🏢 Monitor de Silos - Acceso") }) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -28,82 +33,101 @@ fun PantallaLogin(onLoginExitoso: (nombreUsuario: String, rol: Rol) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Bienvenido",
+                text = "Iniciar Sesión",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Ingresa tus datos para continuar",
-                style = MaterialTheme.typography.bodyMedium
-            )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Campo para el Nombre del Usuario
+            // Campo Nombre de Usuario
             OutlinedTextField(
-                value = nombreInput,
-                onValueChange = {
-                    nombreInput = it
-                    if (it.trim().isNotEmpty()) errorNombre = null
+                value = loginViewModel.nombreInput,
+                onValueChange = { loginViewModel.nombreInput = it },
+                label = { Text("Nombre Completo") },
+                isError = loginViewModel.errorNombre != null,
+                trailingIcon = {
+                    if (loginViewModel.errorNombre != null) {
+                        Icon(Icons.Default.Warning, contentDescription = "Error", tint = MaterialTheme.colorScheme.error)
+                    }
                 },
-                label = { Text("Nombre de usuario / Operario") },
-                isError = errorNombre != null,
                 supportingText = {
-                    errorNombre?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    loginViewModel.errorNombre?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Selecciona tu Rol:",
+                text = "Selecciona tu Rol Autorizado:",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.align(Alignment.Start)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Selector de Roles (FilterChips)
+            // Selector de Rol
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 FilterChip(
-                    selected = rolSeleccionado == Rol.OPERARIO,
-                    onClick = { rolSeleccionado = Rol.OPERARIO },
+                    selected = loginViewModel.rolSeleccionado == Rol.OPERARIO,
+                    onClick = { loginViewModel.rolSeleccionado = Rol.OPERARIO },
                     label = { Text("👷 Operario") }
                 )
                 FilterChip(
-                    selected = rolSeleccionado == Rol.SUPERVISOR,
-                    onClick = { rolSeleccionado = Rol.SUPERVISOR },
+                    selected = loginViewModel.rolSeleccionado == Rol.SUPERVISOR,
+                    onClick = { loginViewModel.rolSeleccionado = Rol.SUPERVISOR },
                     label = { Text("👮 Supervisor") }
                 )
                 FilterChip(
-                    selected = rolSeleccionado == Rol.JEFATURA,
-                    onClick = { rolSeleccionado = Rol.JEFATURA },
+                    selected = loginViewModel.rolSeleccionado == Rol.JEFATURA,
+                    onClick = { loginViewModel.rolSeleccionado = Rol.JEFATURA },
                     label = { Text("📊 Jefatura") }
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            // Mensaje de Error General de Autenticación
+            loginViewModel.errorLoginGeneral?.let { error ->
+                Spacer(modifier = Modifier.height(12.dp))
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
 
-            // Botón de Ingreso
+            Spacer(modifier = Modifier.height(24.dp))
+
             Button(
-                onClick = {
-                    if (nombreInput.trim().isEmpty()) {
-                        errorNombre = "Por favor, ingresa tu nombre"
-                    } else {
-                        onLoginExitoso(nombreInput.trim(), rolSeleccionado)
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
+                onClick = { loginViewModel.autenticar { usuario -> onLoginExitoso(usuario) } },
+                modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
-                Text("Ingresar a la Aplicación")
+                Text("Ingresar")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Guía/Sugerencia para pruebas durante la evaluación
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("💡 Usuarios de prueba registrados:", style = MaterialTheme.typography.labelLarge)
+                    Text("• Operarios: Juan Pérez, María González", style = MaterialTheme.typography.bodySmall)
+                    Text("• Supervisor: Carlos Silva", style = MaterialTheme.typography.bodySmall)
+                    Text("• Jefatura: Ana Morales", style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
     }

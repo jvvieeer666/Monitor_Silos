@@ -24,14 +24,14 @@ fun AppNavigation() {
         navController = navController,
         startDestination = Rutas.LOGIN
     ) {
-        // Pantalla de Login
+        // Pantalla de Login con autenticación
         composable(Rutas.LOGIN) {
             PantallaLogin(
-                onLoginExitoso = { usuario, rol ->
-                    val ruta = when (rol) {
-                        Rol.OPERARIO -> "operario/$usuario"
-                        Rol.SUPERVISOR -> "supervisor/$usuario"
-                        Rol.JEFATURA -> "jefatura/$usuario"
+                onLoginExitoso = { usuario ->
+                    val ruta = when (usuario.rol) {
+                        Rol.OPERARIO -> "operario/${usuario.nombre}"
+                        Rol.SUPERVISOR -> "supervisor/${usuario.nombre}"
+                        Rol.JEFATURA -> "jefatura/${usuario.nombre}"
                     }
                     navController.navigate(ruta)
                 }
@@ -43,8 +43,8 @@ fun AppNavigation() {
             route = Rutas.OPERARIO,
             arguments = listOf(navArgument("usuario") { type = NavType.StringType })
         ) { backStackEntry ->
-            val usuario = backStackEntry.arguments?.getString("usuario") ?: "Usuario"
-            PantallaOperario() // Puedes pasar 'usuario' a tu ViewModel o pantalla
+            val nombreUsuario = backStackEntry.arguments?.getString("usuario") ?: "Operario"
+            PantallaOperario()
         }
 
         // Pantalla Supervisor
@@ -52,7 +52,7 @@ fun AppNavigation() {
             route = Rutas.SUPERVISOR,
             arguments = listOf(navArgument("usuario") { type = NavType.StringType })
         ) { backStackEntry ->
-            val usuario = backStackEntry.arguments?.getString("usuario") ?: "Supervisor"
+            val nombreUsuario = backStackEntry.arguments?.getString("usuario") ?: "Supervisor"
             PantallaSupervisor()
         }
 
@@ -61,7 +61,7 @@ fun AppNavigation() {
             route = Rutas.JEFATURA,
             arguments = listOf(navArgument("usuario") { type = NavType.StringType })
         ) { backStackEntry ->
-            val usuario = backStackEntry.arguments?.getString("usuario") ?: "Jefatura"
+            val nombreUsuario = backStackEntry.arguments?.getString("usuario") ?: "Jefatura"
             PantallaJefatura()
         }
     }

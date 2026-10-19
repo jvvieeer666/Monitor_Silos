@@ -4,10 +4,19 @@ import com.duoc.monitorsilos.model.Alerta
 import com.duoc.monitorsilos.model.EstadoSilo
 import com.duoc.monitorsilos.model.Granja
 import com.duoc.monitorsilos.model.Movimiento
+import com.duoc.monitorsilos.model.Rol
 import com.duoc.monitorsilos.model.Silo
 import com.duoc.monitorsilos.model.TipoMovimiento
+import com.duoc.monitorsilos.model.Usuario
 
 object DatosSimulados {
+
+    val usuariosValidos = listOf(
+        Usuario(id = 1, nombre = "Juan Pérez", rol = Rol.OPERARIO),
+        Usuario(id = 2, nombre = "María González", rol = Rol.OPERARIO),
+        Usuario(id = 3, nombre = "Carlos Silva", rol = Rol.SUPERVISOR),
+        Usuario(id = 4, nombre = "Ana Morales", rol = Rol.JEFATURA)
+    )
 
     // ==================== SILOS ====================
     val silos: List<Silo> = listOf(
@@ -96,4 +105,10 @@ object DatosSimulados {
         movimientos.filter { it.siloId == siloId }
 
     fun obtenerSiloPorId(id: Int): Silo? = silos.find { it.id == id }
+
+    fun validarUsuario(nombre: String, rol: Rol): Usuario? {
+        return usuariosValidos.find {
+            it.nombre.equals(nombre.trim(), ignoreCase = true) && it.rol == rol
+        }
+    }
 }
